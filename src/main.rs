@@ -18,6 +18,8 @@ use ratatui::{
 use std::{
     io::stdout,
     sync::mpsc::{channel, TryRecvError},
+    thread,
+    time::Duration,
 };
 use tokio::task::spawn_blocking;
 
@@ -73,7 +75,7 @@ async fn main() -> Result<()> {
                     code: KeyCode::Char('c'),
                     modifiers: KeyModifiers::CONTROL,
                     ..
-                }) => todo!(),
+                }) => break Ok(()),
                 Event::Mouse(MouseEvent {
                     kind: MouseEventKind::Down(MouseButton::Left),
                     column,
@@ -112,15 +114,20 @@ async fn main() -> Result<()> {
                     (Some(true), Some(false), _, _) => {
                         *grid.get_mut(row, col).unwrap() = false;
                         *grid.get_mut(row + 1, col).unwrap() = true;
+                        thread::sleep(Duration::from_millis(2));
                         break;
                     }
                     (Some(true), Some(true), Some(true), Some(false)) => {
                         *grid.get_mut(row, col).unwrap() = false;
                         *grid.get_mut(row + 1, col + 1).unwrap() = true;
+                        thread::sleep(Duration::from_millis(2));
+                        break;
                     }
                     (Some(true), Some(true), Some(false), Some(true)) => {
                         *grid.get_mut(row, col).unwrap() = false;
                         *grid.get_mut(row + 1, col - 1).unwrap() = true;
+                        thread::sleep(Duration::from_millis(2));
+                        break;
                     }
                     _ => (),
                 }
