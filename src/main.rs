@@ -58,8 +58,8 @@ async fn main() -> Result<()> {
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     let mut grid = Array2D::filled_with(
         false,
-        (terminal.size()?.height - 10).into(),
-        (terminal.size()?.width - 10).into(),
+        (terminal.size()?.height - 2).into(),
+        (terminal.size()?.width - 2).into(),
     );
     let (physics_tx, physics_rx) = channel::<Signal>();
 
