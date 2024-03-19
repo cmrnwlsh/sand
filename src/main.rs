@@ -18,8 +18,6 @@ use ratatui::{
 use std::{
     io::stdout,
     sync::mpsc::{channel, TryRecvError},
-    thread,
-    time::Duration,
 };
 use tokio::task::spawn_blocking;
 
@@ -52,6 +50,7 @@ impl<'a> From<&Array2D<bool>> for RenderInput<'a> {
 
 enum Signal {
     Click(usize, usize),
+    Moved(usize, usize),
     Resize(usize, usize),
 }
 
@@ -63,6 +62,7 @@ async fn main() -> Result<()> {
         (terminal.size()?.height - 2).into(),
         (terminal.size()?.width - 2).into(),
     );
+    let mut mouse_pressed = false;
     let (physics_tx, physics_rx) = channel::<Signal>();
 
     enable_raw_mode()?;
@@ -82,6 +82,12 @@ async fn main() -> Result<()> {
                     row,
                     ..
                 }) => physics_tx.send(Signal::Click(row.into(), column.into()))?,
+                Event::Mouse(MouseEvent {
+                    kind: MouseEventKind::Moved,
+                    column,
+                    row,
+                    ..
+                }) => physics_tx.send(Signal::Moved(row.into(), column.into()))?,
                 Event::Resize(_, _) => (),
                 _ => (),
             }
@@ -92,8 +98,16 @@ async fn main() -> Result<()> {
         match physics_rx.try_recv() {
             Err(TryRecvError::Disconnected) => break,
             Ok(Signal::Click(row, col)) => {
-                if let Some(b) = grid.get_mut(row, col) {
+                if let (Some(b), false) = (grid.get_mut(row, col), mouse_pressed) {
                     *b = true;
+                }
+                mouse_pressed = !mouse_pressed;
+            }
+            Ok(Signal::Moved(row, col)) => {
+                if mouse_pressed {
+                    if let Some(b) = grid.get_mut(row, col) {
+                        *b = true;
+                    }
                 }
             }
             _ => (),
@@ -114,19 +128,16 @@ async fn main() -> Result<()> {
                     (Some(true), Some(false), _, _) => {
                         *grid.get_mut(row, col).unwrap() = false;
                         *grid.get_mut(row + 1, col).unwrap() = true;
-                        thread::sleep(Duration::from_millis(2));
                         break;
                     }
                     (Some(true), Some(true), Some(true), Some(false)) => {
                         *grid.get_mut(row, col).unwrap() = false;
                         *grid.get_mut(row + 1, col + 1).unwrap() = true;
-                        thread::sleep(Duration::from_millis(2));
                         break;
                     }
                     (Some(true), Some(true), Some(false), Some(true)) => {
                         *grid.get_mut(row, col).unwrap() = false;
                         *grid.get_mut(row + 1, col - 1).unwrap() = true;
-                        thread::sleep(Duration::from_millis(2));
                         break;
                     }
                     _ => (),
