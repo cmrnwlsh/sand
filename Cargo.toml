@@ -1,0 +1,14 @@
+[package]
+name = "sand"
+version = "0.1.0"
+edition = "2021"
+
+[toolchain]
+channel = "nightly"
+
+[dependencies]
+anyhow = "1.0.81"
+array2d = "0.3.2"
+crossterm = "0.27.0"
+ratatui = "0.26.1"
+tokio = { version = "1.36.0", features = ["full"] }
